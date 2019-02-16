@@ -1,0 +1,19 @@
+{
+  "exp_name": "oxford_pet_1",
+
+  "data_dir": "../data/oxford_pet/",
+
+  "image_size": 299,
+  "image_depth": 3,
+  "num_classes": 37,
+
+  "batch_size": 32,
+  "num_epochs": 7,
+
+  "learning_rate": 5e-6,
+
+  "max_to_keep": 2,
+
+  "num_parallel_calls": 4,
+  "save_summary_steps": 1
+}
