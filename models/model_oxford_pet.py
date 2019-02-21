@@ -56,15 +56,19 @@ class OxfordPetModel(BaseModel):
         """
         with tf.variable_scope('network'):
             with tf.variable_scope('xception'):
-                # begin with pre-trained Xception network
+                # begin with Xception network pretrained on ImageNet
                 self.xception = tf.keras.applications.xception.Xception(
-                    include_top=False, pooling='avg')
+                    weights='imagenet', include_top=False, pooling='avg')
 
-                # train only the Exit Flow block of Xception network
-                self.xception.trainable = False
+                # train only the Exit flow of Xception network
+                for layer in self.xception.layers[: 116] :
+                    layer.trainable = False
 
             with tf.variable_scope('out'):
+                # Pass input tensor through Xception network
                 self.xception_output = self.xception(self.x)
+
+                # Final dense layer
                 self.dense = tf.layers.Dense(self.config.num_classes)
                 self.out = self.dense(self.xception_output)
                 tf.add_to_collection('out', self.out)

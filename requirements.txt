@@ -1,5 +1,5 @@
 numpy
 tensorflow
+scikit-image
 tqdm
 easydict
-scikit-image

@@ -1,79 +1,44 @@
 """
-Description of Preprocessing pipeline for Oxford Pet dataset
-(the dataset be found here: http://www.robots.ox.ac.uk/~vgg/data/pets/).
+Example of Preprocessing pipeline for Oxford Pet dataset.
 
-1) Create the train/dev/test split using original dataset.
-
-Taking into account the fact that dev and test set distributions
-should be represantative of the whole dataset, and that the size of the 
-original dataset is not so big (7349 images), I decided that dev and test
-datasets should be 10% of the whole dataset each (that is 735 images each),
-and of course splitting is stratified.
-
-As soon as all preprocessing described below takes place, respective
-changes are made to the training set (which now contains ~ 34k images),
-and then it is shuffled.
-
-
-2) Preprocess Oxford Pet dataset for use in my application.
-
-The steps that were done for preprocessing are:
-    - reshape all images into shape (299, 299, 3)
-    - flip every image horizontally (x2)
-    - apply PCA color augmentation to all previous transformations (x4)
-This results in a preprocessed dataset which is 4 times the dataset
-I started with.
-
-Images are placed in 3 different folders:
-    - train_images/ (fully preprocessed)
-    - dev_images/ (only resized)
-    - test_images/ (only resized)
-For your convenience (e.g. if your ever decide to change train/dev/test split,
-train_images/ folder actually contains all preprocessed images).
-
-Every preprocessed image has some postfix added to its name.
-Postfix convention:
-    "_f" - flipped image
-    "_ca" - applied PCA color augmentation
-Multiple postfixes can be combined, e.g. "_f_ca"
+All required preprocessing is done beforehand, but you should
+read this file to learn how preprocessing was done and see it
+applied to an example image.
 
 Functions used for preprocessing are:
     - skimage.transform.resize for image resizing
     - np.flip for horizontal flipping of the image
     - pca_color_augmentation (defined below)
 
-As for image labels, every label is a class number of an image (from 0 to 36),
-as there are 37 classes (pet breeds) in the dataset.
-
-
-3) Futher data augmentation.
-
-While working on this project, I discovered that there are some problematic
-pet breeds which are difficult for the model (as well as for a person) to
-distinguish, and so I found some additional images of those breeds on the 
-Internet (using Google Images), and added them to the dataset with all required
-preprocessing.
-
-
-4) All preprocessing is done beforehand.
-
-I decided that since preprocessing took a long time to complete,
-I would supply this project with the dataset that is already preprocessed
-and augmented, so no further processing is required.
+Every preprocessed image has some postfix added to its name.
+Postfix convention:
+    "_f" - flipped image
+    "_ca" - applied PCA color augmentation
+Multiple postfixes can be combined, e.g. "_f_ca"
 """
 
 import numpy as np
+
+from skimage.io import imread, imsave
 from skimage.transform import resize
 
+from os.path import split, join
 
-def pca_color_augmentation(original_image, scale=0.2):
-    """
-    Apply PCA color augmentation to original image and
-    return transformed image of shape (299, 299, 3)
-    """
-    renorm_image = original_image.reshape(-1, 3)
+import sys
+sys.path.extend(['../..'])
 
+from utils.utils import get_args
+from utils.config import process_config
+
+
+def pca_color_augmentation(input_image, scale=0.2):
+    """
+    Apply PCA color augmentation to input image and
+    return transformed image.
+    """
+    renorm_image = input_image.reshape(-1, 3)
     renorm_image = renorm_image.astype('float32')
+
     mean = np.mean(renorm_image, axis=0)
     std = np.std(renorm_image, axis=0)
     renorm_image = (renorm_image - mean) / std
@@ -92,16 +57,37 @@ def pca_color_augmentation(original_image, scale=0.2):
     return pca_color_image.reshape(299, 299, 3)
 
 
-def main():
+def main(config):
     """
-    An example of importing train/dev/test image names and labels.
-    All preprocessed images are stored in
-    data/oxford-iiit-pet/images_preprocessed/ directory.
+    Preprocessing pipeline for an example image.
+    All functions and naming conventions used here
+    are defined and described above.
     """
+    dir, filename = split(config.path_to_example)
 
-    train_filenames = np.load('train_filenames.npy')
-    dev_filenames = np.load('dev_filenames.npy')
-    test_filenames = np.load('test_filenames.npy')
-    train_labels = np.load('train_labels.npy')
-    dev_labels = np.load('dev_labels.npy')
-    test_labels = np.load('test_labels.npy')
+    original_image = imread(join(dir, filename))
+    resized_image = resize(original_image, (299, 299),
+        mode='reflect', preserve_range=True).astype('uint8')
+
+    flipped_image = np.flip(resized_image, 1)
+    color_augmented_image = pca_color_augmentation(resized_image)
+    flipped_color_augmented_image = pca_color_augmentation(flipped_image)
+
+    filename = filename.replace('.jpg', '')
+
+    imsave(join(dir, filename + '.png'), resized_image)
+    imsave(join(dir, filename + '_f.png'), flipped_image)
+    imsave(join(dir, filename + '_ca.png'), color_augmented_image)
+    imsave(join(dir, filename + '_f_ca.png'), flipped_color_augmented_image)
+
+
+if __name__ == '__main__':
+    # capture the config path from the run arguments
+    # then process the json configuration file
+    try:
+        args = get_args()
+        config = process_config(args.config)
+        main(config)
+
+    except Exception as e:
+        print('Missing or invalid arguments %s' % e)

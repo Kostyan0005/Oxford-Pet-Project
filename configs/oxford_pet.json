@@ -3,6 +3,8 @@
 
   "data_dir": "../data/oxford_pet/",
 
+  "path_to_example": "example/example_image.jpg",
+
   "image_size": 299,
   "image_depth": 3,
   "num_classes": 37,

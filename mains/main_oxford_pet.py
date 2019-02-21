@@ -42,7 +42,6 @@ def main():
     # create instance of the model you want
     model = OxfordPetModel(data_loader, config)
 
-
     # create tensorboard logger
     logger = DefinedSummarizer(sess, summary_dir=config.summary_dir,
                                scalar_tags=['train/loss_per_epoch', 'train/acc_per_epoch',
