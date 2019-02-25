@@ -60,9 +60,11 @@ class OxfordPetModel(BaseModel):
                 self.xception = tf.keras.applications.xception.Xception(
                     weights='imagenet', include_top=False, pooling='avg')
 
-                # train only the Exit flow of Xception network
-                for layer in self.xception.layers[: 116] :
-                    layer.trainable = False
+                self.xception.trainable = self.is_training
+                if self.is_training:
+                    # train only the Exit flow of Xception network
+                    for layer in self.xception.layers[: 116] :
+                        layer.trainable = False
 
             with tf.variable_scope('out'):
                 # Pass input tensor through Xception network
